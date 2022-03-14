@@ -3,7 +3,7 @@ import sqlparse
 import statement_helper as s
 
 
-def test_insert_into():
+def test_insert_into_01():
     sql = """
         insert into schema.phys_t_1
         with aaa as (
@@ -30,5 +30,30 @@ def test_insert_into():
     assert ans[0].value == "schema.phys_t_4"
 
 
+def test_insert_into_02():
+    sql = """
+        with w_1 as (
+          with w_2 as (
+            with w_3 as (
+              select * from (
+                select * from schema.phys_a
+              ) t
+            )
+            select * from w_3
+          )
+          select * from w_2
+        )
+        select * from w_1
+    """
+
+    statements = sqlparse.parse(sql)
+    statement = statements[0]
+    ans = s.get_insert_into_set(statement)
+    assert ans == set()
+    ans = s.collect_source_tables(statement)
+    assert ans == {"schema.phys_a"}
+
+
 if __name__ == "__main__":
-    test_insert_into()
+    test_insert_into_01()
+    test_insert_into_02()

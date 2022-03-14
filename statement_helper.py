@@ -66,14 +66,16 @@ def get_join_idfs(statement, idx=-1):
 
 
 def _collect_source_tables_recursively(statement):
-    withs = _create_withs(statement)
-    source_tables = _collect_source_tables_local(statement)
-    return _expand_with(source_tables, withs)
+    with_source_tables = _collect_with_source_tables(statement)
+    source_tables = _expand_with(
+        _collect_source_tables_local(statement), with_source_tables
+    )
+    return source_tables
 
 
-def _create_withs(statement):
-    with2idfs = get_with_identifier_dict(statement)
-    return {k: collect_source_tables(v) for k, v in with2idfs.items()}
+def _collect_with_source_tables(statement):
+    name2idfs = get_with_identifier_dict(statement)
+    return {k: collect_source_tables(v) for k, v in name2idfs.items()}
 
 
 def _collect_source_tables_local(statement):
@@ -102,18 +104,11 @@ def _collect_source_tables_local(statement):
     return source_set
 
 
-def _expand_with(names, withs):
-    while True:
-        found = False
-        new = set()
-        # print(f"#{names}")
-        for name in names:
-            if name in withs:
-                found = True
-                new |= withs[name]
-            else:
-                new.add(name)
-        names = new
-        if not found:
-            break
-    return names
+def _expand_with(names, with_source_tables):
+    new_names = set()
+    for name in names:
+        if name in with_source_tables:
+            new_names |= with_source_tables[name]
+        else:
+            new_names.add(name)
+    return new_names
