@@ -68,23 +68,12 @@ def get_join_idfs(statement, idx=-1):
 def _collect_source_tables_recursively(statement):
     withs = _create_withs(statement)
     source_tables = _collect_source_tables_local(statement)
-    # print(f"with = {withs}")
-    # print(f"source_tables = {source_tables}")
     return _expand_with(source_tables, withs)
 
 
 def _create_withs(statement):
     with2idfs = get_with_identifier_dict(statement)
-    if len(with2idfs) == 0:
-        return {}
     return {k: collect_source_tables(v) for k, v in with2idfs.items()}
-
-
-def _get_insert_dependency(statement):
-    insert_into_set = get_insert_into_set(statement)
-    source_tables = collect_source_tables(statement)
-    for insert_into in insert_into_set:
-        print(f"{insert_into}\n  <= {source_tables}")
 
 
 def _collect_source_tables_local(statement):
