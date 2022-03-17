@@ -16,7 +16,9 @@ def test_insert_into_01():
 
     statements = sqlparse.parse(sql)
     statement = statements[0]
-    ans = s.get_insert_into_set(statement)
+    ans = s.get_detailed_type(statement)
+    assert ans == "INSERT INTO SELECT"
+    ans = s.get_dest_tables(statement)
     assert ans == {"schema.phys_t_1"}
     ans = s.collect_source_tables(statement)
     assert ans == {"schema.phys_t_2", "schema.phys_t_3", "schema.phys_t_4"}
@@ -48,12 +50,46 @@ def test_insert_into_02():
 
     statements = sqlparse.parse(sql)
     statement = statements[0]
-    ans = s.get_insert_into_set(statement)
+    ans = s.get_detailed_type(statement)
+    assert ans == "SELECT"
+    ans = s.get_dest_tables(statement)
     assert ans == set()
     ans = s.collect_source_tables(statement)
     assert ans == {"schema.phys_a"}
 
 
+def test_create_table_01():
+    sql = """
+        create temp table t_1
+        select * from schema.phys_a;
+    """
+
+    statements = sqlparse.parse(sql)
+    statement = statements[0]
+    ans = s.get_detailed_type(statement)
+    assert ans == "CREATE TEMP TABLE SELECT"
+    ans = s.get_dest_tables(statement)
+    assert ans == {"t_1"}
+    ans = s.collect_source_tables(statement)
+    assert ans == {"schema.phys_a"}
+
+
+def test_create_table_02():
+    sql = """
+        create temp table t_1 (
+          id int,
+          aaa string
+        );
+    """
+
+    statements = sqlparse.parse(sql)
+    statement = statements[0]
+    ans = s.get_detailed_type(statement)
+    assert ans == "CREATE TEMP TABLE"
+
+
 if __name__ == "__main__":
     test_insert_into_01()
     test_insert_into_02()
+    test_create_table_01()
+    test_create_table_02()
